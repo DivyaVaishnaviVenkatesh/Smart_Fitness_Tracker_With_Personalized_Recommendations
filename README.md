@@ -16,6 +16,16 @@ A Smart Fitness Tracker that provides personalized diet, workout, and medicine r
 
 ## How to execute the project
   - Download the project from github.
+    Build from source:
+
+     Clone the Smart_Fitness_Tracker_With_Personalized_Recommendations.git repository:
+```bash
+git clone https://github.com/DivyaVaishnaviVenkatesh/Smart_Fitness_Tracker_With_Personalized_Recommendations.git
+```
+Navigate to the project directory:
+```bash
+cd Smart_Fitness_Tracker_With_Personalized_Recommendations.git
+```
   - Install Required Python Libraries
       ```bash
       pip install -r requirements.txt
