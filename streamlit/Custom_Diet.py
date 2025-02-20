@@ -9,28 +9,28 @@ import plotly.express as px
 import plotly.graph_objects as go
 import sqlite3
 
-def insert_diet_data(name, dosage, frequency, side_effects):
-    # Create a connection to the SQLite database
-    conn = sqlite3.connect('fitness.db')  # replace with your actual database name
+def insert_diet_data(username, name, dosage, frequency, side_effects):
+    conn = sqlite3.connect('fitness.db')
     cursor = conn.cursor()
+    try:
+        cursor.execute('''
+            INSERT INTO diets (username, name, dosage, frequency, side_effects)
+            VALUES (?, ?, ?, ?, ?)
+        ''', (username, name, dosage, frequency, side_effects))
+        conn.commit()
+        print(f"Inserted diet data: Username={username}, Name={name}, Dosage={dosage}, Frequency={frequency}, Side Effects={side_effects}")
+    except sqlite3.Error as e:
+        print(f"Error inserting diet data: {e}")
+    finally:
+        conn.close()
 
-    # Insert query
-    insert_query = '''
-    INSERT INTO diets (name, dosage, frequency, side_effects)
-    VALUES (?, ?, ?, ?)
-    '''
-    
-    # Data to be inserted
-    data = (name, dosage, frequency, side_effects)
-    
-    # Execute the insert query
-    cursor.execute(insert_query, data)
-    
-    # Commit the changes and close the connection
-    conn.commit()
+def fetch_diets(username):
+    conn = sqlite3.connect('fitness.db')
+    cursor = conn.cursor()
+    cursor.execute('SELECT * FROM diets WHERE username = ?', (username,))
+    data = cursor.fetchall()
     conn.close()
-    print("Data inserted successfully!")
-
+    return data
 
 class Person:
     def __init__(self, age, height, weight, gender, activity, weight_loss):
@@ -161,7 +161,11 @@ def display_recommendation(dataset):
             frequency = "Not available"  # Set as required or fetch from the dataset
             side_effects = "Not available"  # Set as required or fetch from the dataset
             
-            insert_diet_data(recipe_name, dosage, frequency, side_effects)
+            # Use st.session_state.username instead of user_name
+            if st.session_state.username:
+                insert_diet_data(st.session_state.username, recipe_name, dosage, frequency, side_effects)
+            else:
+                st.warning("Please log in to save diet recommendations.")
 
             expander = st.expander(recipe_name)
             expander.markdown(f'<h5 style="text-align: center;font-family:sans-serif;">Ingredients:</h5>', unsafe_allow_html=True)
@@ -176,7 +180,6 @@ def display_recommendation(dataset):
             expander.markdown(f"""
                         Total Calories Intake: {calories}
                     """)
-
 
 # Load PDF File
 def displayPDF(file):

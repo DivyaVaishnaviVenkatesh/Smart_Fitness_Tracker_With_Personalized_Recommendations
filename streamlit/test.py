@@ -5,37 +5,36 @@ import plotly.graph_objects as go
 import sqlite3
 
 # Function to initialize a database for medicine data
-def insert_medicine_data(disease_input, med_name, dosage_form, strength, instructions):
+def insert_medicine_data(username, disease_name, medicine_name, dosage_form, strength, instructions):
+    conn = sqlite3.connect('fitness.db')
+    cursor = conn.cursor()
     try:
-        with sqlite3.connect('fitness.db') as conn:
-            c = conn.cursor()
-            c.execute('''
-            CREATE TABLE IF NOT EXISTS medicines (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                disease_name TEXT,
-                medicine_name TEXT,
-                dosage_form TEXT,
-                strength TEXT,
-                instructions TEXT
-            )
-            ''')
-            c.execute('''
-            INSERT INTO medicines (disease_name, medicine_name, dosage_form, strength, instructions)
-            VALUES (?, ?, ?, ?, ?)
-            ''', (disease_input, med_name, dosage_form, strength, instructions))
-    except Exception as e:
-        print(f"Error: {e}")
+        cursor.execute('''
+            INSERT INTO medicines (username, disease_name, medicine_name, dosage_form, strength, instructions)
+            VALUES (?, ?, ?, ?, ?, ?)
+        ''', (username, disease_name, medicine_name, dosage_form, strength, instructions))
+        conn.commit()
+        print(f"Inserted medicine data: Username={username}, Disease={disease_name}, Medicine={medicine_name}, Dosage Form={dosage_form}, Strength={strength}, Instructions={instructions}")
+    except sqlite3.Error as e:
+        print(f"Error inserting medicine data: {e}")
+    finally:
+        conn.close()
 
-def fetch_medicine_data(disease_name):
-    try:
-        with sqlite3.connect('fitness.db') as conn:
-            c = conn.cursor()
-            c.execute('SELECT * FROM medicines WHERE disease_name = ?', (disease_name,))
-            data = c.fetchall()
-        return data
-    except Exception as e:
-        print(f"Error: {e}")
-        return []
+def fetch_medicines(username):
+    conn = sqlite3.connect('fitness.db')
+    cursor = conn.cursor()
+    cursor.execute('SELECT * FROM medicines WHERE username = ?', (username,))
+    data = cursor.fetchall()
+    conn.close()
+    return data
+
+def get_username():
+    conn = sqlite3.connect('fitness.db')
+    cursor = conn.cursor()
+    cursor.execute("SELECT username FROM users LIMIT 1")  # Modify query if needed
+    user = cursor.fetchone()
+    conn.close()
+    return user[0] if user else None
 
 # Medicine JSON File
 medicine_data = '''
@@ -217,6 +216,10 @@ def draw():
     st.plotly_chart(fig_line)
 
 def main_1():
+    username = get_username()
+    if not username:
+        st.error("No user found in the database!")
+        return  # Stop execution if no user is found
     st.title("Medication Recommender For Diseases")
     Age = st.selectbox('Age', ['Select', '10-18', '19-30', '31-50', 'Above 50'])
     disease_input = st.selectbox('Choose your disease', ['Select', 'Asthma', 'Cold', 'Diabetes', 'Flu', 'Hypertension'])
@@ -233,7 +236,7 @@ def main_1():
                     """,
                     unsafe_allow_html=True)
                 for med in medicines:
-                    insert_medicine_data(disease_input, med['name'], med['dosage_form'], med['strength'], med['instructions'])
+                    insert_medicine_data(username,disease_input, med['name'], med['dosage_form'], med['strength'], med['instructions'])
                     st.markdown(
                         f"""
                             <h6 style="color:yellow;font-style:italic; font-family:cursive;">S.No: {nums}</h6>
